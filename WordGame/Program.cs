@@ -101,7 +101,7 @@ namespace WordGame
 
         static void CheckWord(ref string word)
         {
-            if (word == "")
+            if (word == ""|| word.Length>30)
             {
                 Console.WriteLine("Неккоректное слово");
                 word = Console.ReadLine();
