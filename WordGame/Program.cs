@@ -1,18 +1,68 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Mime;
 using System.Timers;
 
 namespace WordGame
 {
     public class Program
     {
+        private static int POINT_MENU = 2;
+
         static void Main(string[] args)
         {
-            Game();
+            Menu();
+        }
+
+        static void Menu()
+        {
+            string[] pointMenu = {"Старт","Выход"};
+            int currunt = 1;
+            while (true)
+            {
+                PrintMenu(currunt,pointMenu);
+                switch (Console.ReadKey().Key)
+                {
+                    case ConsoleKey.UpArrow:
+                        if (currunt!=0)
+                        {
+                            currunt--;
+                        }
+                        break;
+                    case ConsoleKey.DownArrow:
+                        if (currunt != 1)
+                        {
+                            currunt++;
+                        }
+                        break;
+                    case ConsoleKey.Enter:
+                        if (currunt == 0)
+                        {
+                            Game();
+
+                        }
+                        else
+                        {
+                            Environment.Exit(0);
+                        }
+                        break;
+                }
+            }
+            
+        }
+
+        static void PrintMenu(int current,string[] menu)
+        {
+            Console.Clear();
+            for (int i = 0; i < POINT_MENU; i++)
+            {
+                Console.WriteLine("{0} {1}",current==i?"-->":"  ",menu[i]);
+            }
         }
 
         static void Game()
         {
+            Console.Clear();
             bool IsFirstPlayer = true;
             bool IsEndGame;
             string[] players = {"первый игрок", "второй игрок"};
@@ -31,6 +81,7 @@ namespace WordGame
                 }
             }
             Console.WriteLine($"Победил {players[Convert.ToInt32(!IsFirstPlayer)]}");
+            Console.ReadLine();
         }
 
         static List<char> RemoveRepeatLetters(char[] letters)
