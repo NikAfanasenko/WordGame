@@ -13,32 +13,24 @@ namespace WordGame
 
         static void Game()
         {
+            bool IsFirstPlayer = true;
+            bool IsEndGame;
+            string[] players = {"первый игрок", "второй игрок"};
             Console.WriteLine("Введите первоначальное слово:");
             string firstWord = Console.ReadLine();
+            CheckNull(ref firstWord);
+            List<char> lettersInFirstWord = RemoveRepeatLetters(firstWord.ToLower().ToCharArray());
             
-            CheckWord(ref firstWord);
-            Console.WriteLine(firstWord);
-            char[] allLettersInFirstWord = firstWord.ToLower().ToCharArray();
-            List<char> lettersInFirstWord = RemoveRepeatLetters(allLettersInFirstWord);
-            bool IsFirstPlayer = true;
-            bool IsEndGame = false;
             while (true)
             {
-                IsFirstPlayer = ChangePlayer(IsFirstPlayer, in lettersInFirstWord, out IsEndGame);
+                Console.WriteLine($"{players[Convert.ToInt32(!IsFirstPlayer)]} :");
+                IsFirstPlayer = ChangePlayer(IsFirstPlayer, lettersInFirstWord, out IsEndGame);
                 if (IsEndGame)
                 {
                     break;
                 }
-                
             }
-            if (IsFirstPlayer)
-            {
-                Console.Write("Победил первый игрок");
-            }
-            else
-            {
-                Console.Write("Победил второй игрок");
-            }
+            Console.WriteLine($"Победил {players[Convert.ToInt32(!IsFirstPlayer)]}");
         }
 
         static List<char> RemoveRepeatLetters(char[] letters)
@@ -64,7 +56,7 @@ namespace WordGame
             return notRepeatLetters;
         }
 
-        static bool CheckLetters(in List<char> startLetters,in List<char> letters)
+        static bool CheckLetters(List<char> startLetters, List<char> letters)
         {
             bool IsExists;
             foreach (char letter in letters)
@@ -84,28 +76,26 @@ namespace WordGame
                     return true;
                 }
             }
-
             return false;
         }
 
-        static bool ChangePlayer(bool IsFirst,in List<char> startLetters, out bool IsEnd)
+        static bool ChangePlayer(bool IsFirst, List<char> startLetters, out bool IsEnd)
         {
             
             string word = Console.ReadLine();
-            CheckWord(ref word);
-            char[] allLettersInWord = word.ToLower().ToCharArray();
-            List<char> lettersInWord = RemoveRepeatLetters(allLettersInWord);
-            IsEnd = CheckLetters(in startLetters,in lettersInWord);
+            CheckNull(ref word);
+            List<char> lettersInWord = RemoveRepeatLetters(word.ToLower().ToCharArray());
+            IsEnd = CheckLetters(startLetters, lettersInWord);
             return !IsFirst;
         }
 
-        static void CheckWord(ref string word)
+        static void CheckNull(ref string word)
         {
-            if (word == ""|| word.Length>30)
+            if (word == "")
             {
                 Console.WriteLine("Неккоректное слово");
                 word = Console.ReadLine();
-                CheckWord(ref word);
+                CheckNull(ref word);
             }
         }
     }
