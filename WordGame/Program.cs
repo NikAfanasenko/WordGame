@@ -54,6 +54,7 @@ namespace WordGame
         static void PrintMenu(int current,string[] menu)
         {
             Console.Clear();
+            Console.WriteLine("Игра в слова\n");
             for (int i = 0; i < POINT_MENU; i++)
             {
                 Console.WriteLine("{0} {1}",current==i?"-->":"  ",menu[i]);
@@ -68,7 +69,8 @@ namespace WordGame
             string[] players = {"первый игрок", "второй игрок"};
             Console.WriteLine("Введите первоначальное слово:");
             string firstWord = Console.ReadLine();
-            CheckNull(ref firstWord);
+            CheckWord(ref firstWord);
+            CheckLenght(ref firstWord);
             List<char> lettersInFirstWord = RemoveRepeatLetters(firstWord.ToLower().ToCharArray());
             
             while (true)
@@ -134,19 +136,29 @@ namespace WordGame
         {
             
             string word = Console.ReadLine();
-            CheckNull(ref word);
+            CheckWord(ref word);
             List<char> lettersInWord = RemoveRepeatLetters(word.ToLower().ToCharArray());
             IsEnd = CheckLetters(startLetters, lettersInWord);
             return !IsFirst;
         }
 
-        static void CheckNull(ref string word)
+        static void CheckWord(ref string word)
         {
             if (word == "")
             {
                 Console.WriteLine("Неккоректное слово");
                 word = Console.ReadLine();
-                CheckNull(ref word);
+                CheckWord(ref word);
+            }
+        }
+
+        static void CheckLenght(ref string word)
+        {
+            if (word.Length > 30|| word.Length<8)
+            {
+                Console.WriteLine("Неккоректная длина слова");
+                word = Console.ReadLine();
+                CheckLenght(ref word);
             }
         }
     }
