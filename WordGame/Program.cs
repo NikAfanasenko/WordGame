@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Mime;
+using System.Text.RegularExpressions;
 using System.Timers;
 
 namespace WordGame
@@ -8,7 +8,8 @@ namespace WordGame
     public class Program
     {
         private static int POINT_MENU = 2;
-
+        private static int NUMBER_OF_MS = 3000;
+        private static bool IsFinishTime = false;
         static void Main(string[] args)
         {
             Menu();
@@ -100,16 +101,34 @@ namespace WordGame
 
         static bool ChangePlayer(bool IsFirst, HashSet<char> startLetters, out bool IsEnd)
         {
+            Timer timer = new Timer(NUMBER_OF_MS);
+            timer.Elapsed += EndTime;
+            timer.Start();
             string word = Console.ReadLine();
+            if (IsFinishTime)
+            {
+                IsEnd = true;
+                return !IsFirst;
+            }
+            timer.Stop();
             CheckWord(ref word);
             HashSet<char> lettersInWord = new HashSet<char>(word.ToLower().ToCharArray());          
             IsEnd = CheckLetters(startLetters, lettersInWord);
+            timer.Elapsed -= EndTime;
             return !IsFirst;
+        }
+
+        static void EndTime(object sender, ElapsedEventArgs e)
+        {
+            Timer timer = (Timer)sender;
+            timer.Stop();
+            IsFinishTime = true;         
         }
 
         static void CheckWord(ref string word)
         {
-            if (word == "")
+            Regex regex = new Regex("[а-я]");
+            if (!regex.IsMatch(word))
             {
                 Console.WriteLine("Неккоректное слово");
                 word = Console.ReadLine();
