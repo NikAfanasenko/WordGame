@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Mime;
 using System.Timers;
 
 namespace WordGame
@@ -8,7 +7,7 @@ namespace WordGame
     public class Program
     {
         private static int POINT_MENU = 2;
-
+        private static bool IsFinishTime = false;
         static void Main(string[] args)
         {
             Menu();
@@ -100,11 +99,28 @@ namespace WordGame
 
         static bool ChangePlayer(bool IsFirst, HashSet<char> startLetters, out bool IsEnd)
         {
+            Timer timer = new Timer(3000);
+            timer.Elapsed += EndTime;
+            timer.Start();
             string word = Console.ReadLine();
+            if (IsFinishTime)
+            {
+                IsEnd = true;
+                return !IsFirst;
+            }
+            timer.Stop();
             CheckWord(ref word);
             HashSet<char> lettersInWord = new HashSet<char>(word.ToLower().ToCharArray());          
             IsEnd = CheckLetters(startLetters, lettersInWord);
+            timer.Elapsed -= EndTime;
             return !IsFirst;
+        }
+
+        static void EndTime(object sender, ElapsedEventArgs e)
+        {
+            Timer timer = (Timer)sender;
+            timer.Stop();
+            IsFinishTime = true;         
         }
 
         static void CheckWord(ref string word)
@@ -126,5 +142,6 @@ namespace WordGame
                 CheckLenght(ref word);
             }
         }
+        
     }
 }
