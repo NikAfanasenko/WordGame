@@ -7,9 +7,13 @@ namespace WordGame
 {
     public class Program
     {
-        private static int POINT_MENU = 2;
-        private static int NUMBER_OF_MS = 3000;
         private static bool IsFinishTime = false;
+        private static int PointMenu = 2;
+        private static int NumberofMS = 3000;
+        private static int MaxLength = 30;
+        private static int MinLength = 8;
+        
+        
         static void Main(string[] args)
         {
             Menu();
@@ -21,7 +25,7 @@ namespace WordGame
             int currunt = 1;
             while (true)
             {
-                PrintMenu(currunt,pointMenu);
+                PrintMenu(currunt,menu: pointMenu);
                 switch (Console.ReadKey().Key)
                 {
                     case ConsoleKey.UpArrow:
@@ -31,19 +35,20 @@ namespace WordGame
                         }
                         break;
                     case ConsoleKey.DownArrow:
-                        if (currunt != 1)
+                        if (currunt != PointMenu - 1)
                         {
                             currunt++;
                         }
                         break;
-                    case ConsoleKey.Enter:                       
-                        if (currunt == 0)
+                    case ConsoleKey.Enter:
+                        switch (currunt)
                         {
-                            Game();
-                        }
-                        else
-                        {
-                            Environment.Exit(0);
+                            case 0:
+                                Game();
+                                break;
+                            case 1:
+                                Environment.Exit(0);
+                                break;
                         }
                         break;
                 }
@@ -53,16 +58,15 @@ namespace WordGame
         static void PrintMenu(int current,string[] menu)
         {
             Console.Clear();
-            Console.WriteLine("Игра в слова\n");
-            for (int i = 0; i < POINT_MENU; i++)
+            Console.Title = "Игра в слова";
+            for (int i = 0; i < PointMenu; i++)
             {
                 Console.WriteLine("{0} {1}",current==i?"-->":"  ",menu[i]);
             }
         }
 
         static void Game()
-        {
-            
+        {          
             bool IsFirstPlayer = true;
             bool IsEndGame;
             string[] players = {"первый игрок", "второй игрок"};
@@ -70,13 +74,12 @@ namespace WordGame
             Console.WriteLine("Введите первоначальное слово:");
             string firstWord = Console.ReadLine();
             CheckWord(ref firstWord);
-            CheckLenght(ref firstWord);
+            CheckLenght(ref firstWord);                       
             HashSet<char> lettersInFirstWord = new HashSet<char>(firstWord.ToLower().ToCharArray());
-
             while (true)
             {
                 Console.WriteLine($"{players[Convert.ToInt32(!IsFirstPlayer)]} :");
-                IsFirstPlayer = ChangePlayer(IsFirstPlayer, lettersInFirstWord, out IsEndGame);
+                IsFirstPlayer = ChangePlayer(IsFirst: IsFirstPlayer,startLetters: lettersInFirstWord, out IsEndGame);
                 if (IsEndGame)
                 {
                     break;
@@ -101,10 +104,21 @@ namespace WordGame
 
         static bool ChangePlayer(bool IsFirst, HashSet<char> startLetters, out bool IsEnd)
         {
-            Timer timer = new Timer(NUMBER_OF_MS);
+            Timer timer = new Timer(NumberofMS);
             timer.Elapsed += EndTime;
             timer.Start();
             string word = Console.ReadLine();
+            /*try
+            {
+                word = Console.ReadLine();
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }*/
+            //string word = Console.ReadLine();
+            
             if (IsFinishTime)
             {
                 IsEnd = true;
@@ -113,7 +127,7 @@ namespace WordGame
             timer.Stop();
             CheckWord(ref word);
             HashSet<char> lettersInWord = new HashSet<char>(word.ToLower().ToCharArray());          
-            IsEnd = CheckLetters(startLetters, lettersInWord);
+            IsEnd = CheckLetters(startLetters: startLetters,letters: lettersInWord);
             timer.Elapsed -= EndTime;
             return !IsFirst;
         }
@@ -122,7 +136,7 @@ namespace WordGame
         {
             Timer timer = (Timer)sender;
             timer.Stop();
-            IsFinishTime = true;         
+            IsFinishTime = true;
         }
 
         static void CheckWord(ref string word)
@@ -130,17 +144,17 @@ namespace WordGame
             Regex regex = new Regex("[а-я]");
             if (!regex.IsMatch(word))
             {
-                Console.WriteLine("Неккоректное слово");
+                Console.WriteLine("Слово должно состоять только из русских букв!");
                 word = Console.ReadLine();
                 CheckWord(ref word);
-            }
+            }                   
         }
 
         static void CheckLenght(ref string word)
         {
-            if (word.Length > 30|| word.Length<8)
+            if (word.Length > MaxLength|| word.Length<MinLength)
             {
-                Console.WriteLine("Неккоректная длина слова");
+                Console.WriteLine("Длина первоначального слова не подхоит!");
                 word = Console.ReadLine();
                 CheckLenght(ref word);
             }
