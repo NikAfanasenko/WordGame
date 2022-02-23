@@ -15,7 +15,6 @@ namespace WordGame
         private Menu _menu;
         private WordGame _game;
 
-        //public event Action Begin;
         private event Action _startGameEventHandler;
         
 
@@ -29,7 +28,6 @@ namespace WordGame
             _menu = new Menu();
             _game = new WordGame(_players[0].Name,_players[1].Name);
             _startGameEventHandler += _game.StartGame;
-            //Begin += Start;
         }
         public void Start()
         {

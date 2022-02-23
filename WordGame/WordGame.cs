@@ -16,9 +16,7 @@ namespace WordGame
         private string[] _names;
         private HashSet<char> _lettersInFirstWord;
         
-
         public bool IsFirstPlayer { get; private set; }
-
 
         public WordGame(params string[] names)
         {
@@ -43,12 +41,9 @@ namespace WordGame
                 {
                     break;
                 }
-                /*if (IsFirstPlayer)
-                {*/
                 Console.WriteLine($"{_names[Convert.ToInt32(!IsFirstPlayer)]} :");
                 WriteWord();
-                IsFirstPlayer = !IsFirstPlayer;
-                //}                
+                IsFirstPlayer = !IsFirstPlayer;              
             }
             Console.WriteLine($"Победил {_names[Convert.ToInt32(!IsFirstPlayer)]} !");
             Console.ReadLine();
@@ -58,41 +53,32 @@ namespace WordGame
             Timer timer = (Timer)sender;
             timer.Stop();
             _isEnd = true;
-            //throw new EndTimeException("Время закончилось!");
         }
         public void WriteWord()
         {
-            //try
-            //{
-                Timer timer = new Timer(NumberOfMS);
-                timer.Elapsed += StopGame;
-                if (!_isFirstWord)
-                {                    
-                    timer.Start();
-                }
-                string word = Console.ReadLine();
-                CheckWord(ref word);                
-                if (_isFirstWord)
-                {
-                    CheckLenght(ref word);
-                    _lettersInFirstWord = new HashSet<char>(word.ToLower().ToCharArray());                
-                }
-                else
-                {
-                    bool isHaveAllLetters = CheckLetters(new HashSet<char>(word.ToLower().ToCharArray()));
-                    if (!isHaveAllLetters)
-                    {
-                        Console.WriteLine("Есть буквы которых нет в превоначальном слове!");
-                        //WriteWord();
-                    }
-                    timer.Stop();
-                }
-            //}
-            /*catch (EndTimeException e)
+            Timer timer = new Timer(NumberOfMS);
+            timer.Elapsed += StopGame;
+            if (!_isFirstWord)
+            {                    
+                timer.Start();
+            }
+            string word = Console.ReadLine();
+            CheckWord(ref word);                
+            if (_isFirstWord)
             {
-                Console.WriteLine($"Победил {_names[Convert.ToInt32(!IsFirstPlayer)]} !") ;
-                Console.WriteLine(e.Message);
-            }*/
+                CheckLenght(ref word);
+                _lettersInFirstWord = new HashSet<char>(word.ToLower().ToCharArray());                
+            }
+            else
+            {
+                bool isHaveAllLetters = CheckLetters(new HashSet<char>(word.ToLower().ToCharArray()));
+                if (!isHaveAllLetters)
+                {
+                    Console.WriteLine("Есть буквы которых нет в превоначальном слове!");
+                    //WriteWord();
+                }
+                timer.Stop();
+            }
         }
         
        private bool CheckLetters(HashSet<char> letters)
