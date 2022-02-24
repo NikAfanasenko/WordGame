@@ -7,19 +7,21 @@ namespace WordGame
 {
     public class Program
     {
-        private static bool IsFinishTime = false;
+        /*private static bool IsFinishTime = false;
         private static int PointMenu = 2;
         private static int NumberofMS = 3000;
         private static int MaxLength = 30;
-        private static int MinLength = 8;
+        private static int MinLength = 8;*/
         
         
         static void Main(string[] args)
         {
-            Menu();
+            GameManager gameManager = new GameManager();
+            gameManager.Start();
+           // Menu();
         }
 
-        static void Menu()
+        /*static void Menu()
         {
             string[] pointMenu = {"Старт","Выход"};
             int currunt = 1;
@@ -63,9 +65,9 @@ namespace WordGame
             {
                 Console.WriteLine("{0} {1}",current==i?"-->":"  ",menu[i]);
             }
-        }
+        }*/
 
-        static void Game()
+        /*static void Game()
         {          
             bool IsFirstPlayer = true;
             bool IsEndGame;
@@ -89,7 +91,7 @@ namespace WordGame
             Console.ReadLine();
         }
 
-        static bool CheckLetters(HashSet<char> startLetters, HashSet<char> letters)
+        /*static bool CheckLetters(HashSet<char> startLetters, HashSet<char> letters)
         {
             
             foreach (char letter in letters)
@@ -100,25 +102,14 @@ namespace WordGame
                 }
             }
             return false;
-        }
+        }*/
 
-        static bool ChangePlayer(bool IsFirst, HashSet<char> startLetters, out bool IsEnd)
+        /*static bool ChangePlayer(bool IsFirst, HashSet<char> startLetters, out bool IsEnd)
         {
             Timer timer = new Timer(NumberofMS);
             timer.Elapsed += EndTime;
             timer.Start();
-            string word = Console.ReadLine();
-            /*try
-            {
-                word = Console.ReadLine();
-            }
-            catch (Exception)
-            {
-
-                throw;
-            }*/
-            //string word = Console.ReadLine();
-            
+            string word = Console.ReadLine();          
             if (IsFinishTime)
             {
                 IsEnd = true;
@@ -130,16 +121,17 @@ namespace WordGame
             IsEnd = CheckLetters(startLetters: startLetters,letters: lettersInWord);
             timer.Elapsed -= EndTime;
             return !IsFirst;
-        }
+        }*/
 
-        static void EndTime(object sender, ElapsedEventArgs e)
+        /*static void EndTime(object sender, ElapsedEventArgs e)
         {
             Timer timer = (Timer)sender;
             timer.Stop();
             IsFinishTime = true;
-        }
+            //throw new Exception("Время закончилось");
+        }*/
 
-        static void CheckWord(ref string word)
+        /*static void CheckWord(ref string word)
         {
             Regex regex = new Regex("[а-я]");
             if (!regex.IsMatch(word))
@@ -148,16 +140,16 @@ namespace WordGame
                 word = Console.ReadLine();
                 CheckWord(ref word);
             }                   
-        }
+        }*/
 
-        static void CheckLenght(ref string word)
+        /*static void CheckLenght(ref string word)
         {
             if (word.Length > MaxLength|| word.Length<MinLength)
             {
-                Console.WriteLine("Длина первоначального слова не подхоит!");
+                Console.WriteLine("Длина первоначального слова некорректная");
                 word = Console.ReadLine();
                 CheckLenght(ref word);
             }
-        }
+        }*/
     }
 }
