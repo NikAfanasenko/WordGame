@@ -7,33 +7,33 @@ namespace WordGame
 {
     public class WordGame
     {
-        
+        private const int NumberPlayers = 2;
         private const int MaxLength = 30;
         private const int MinLength = 8;
         private const int NumberOfMS = 3000;
         private bool _isFirstWord;
         private bool _isEnd;
-        private string[] _names;
+        private bool _isFirstPlayer;
         private HashSet<char> _lettersInFirstWord;
-        
-        public bool IsFirstPlayer { get; private set; }
+        private Player[] _players;
 
-        public WordGame(params string[] names)
+        public WordGame()
         {
             _isFirstWord = true;
-            IsFirstPlayer = true;
+            _isFirstPlayer = true;            
             _isEnd = false;
-            _names = names;
         }
+        
         public void StartGame()
         {
+            InitializePlayers();
             while (true)
             {
                 if (_isFirstWord)
                 {
                     Console.Clear();
                     Console.WriteLine("Введите первоначальное слово: ");
-                    WriteWord();
+                    StartTimer();
                     _isFirstWord = !_isFirstWord;
                     continue;
                 }
@@ -41,20 +41,23 @@ namespace WordGame
                 {
                     break;
                 }
-                Console.WriteLine($"{_names[Convert.ToInt32(!IsFirstPlayer)]} :");
-                WriteWord();
-                IsFirstPlayer = !IsFirstPlayer;              
+                Console.WriteLine($"{_players[Convert.ToInt32(!_isFirstPlayer)].Name} :");
+                StartTimer();
+                _isFirstPlayer = !_isFirstPlayer;              
             }
-            Console.WriteLine($"Победил {_names[Convert.ToInt32(!IsFirstPlayer)]} !");
+            Console.WriteLine($"Победил {_players[Convert.ToInt32(!_isFirstPlayer)].Name} !");
             Console.ReadLine();
         }
-        public void StopGame(object sender, ElapsedEventArgs e)
+
+        private void StopGame(object sender, ElapsedEventArgs e)
         {
+            Console.WriteLine("Время закончилось!");
             Timer timer = (Timer)sender;
             timer.Stop();
             _isEnd = true;
         }
-        public void WriteWord()
+        
+        private void StartTimer()
         {
             Timer timer = new Timer(NumberOfMS);
             timer.Elapsed += StopGame;
@@ -62,12 +65,18 @@ namespace WordGame
             {                    
                 timer.Start();
             }
+            WriteWord();
+            timer.Stop();
+        }
+        
+        private void WriteWord()
+        {
             string word = Console.ReadLine();
-            CheckWord(ref word);                
+            CheckWord(ref word);
             if (_isFirstWord)
             {
                 CheckLenght(ref word);
-                _lettersInFirstWord = new HashSet<char>(word.ToLower().ToCharArray());                
+                _lettersInFirstWord = new HashSet<char>(word.ToLower().ToCharArray());
             }
             else
             {
@@ -75,13 +84,22 @@ namespace WordGame
                 if (!isHaveAllLetters)
                 {
                     Console.WriteLine("Есть буквы которых нет в превоначальном слове!");
-                    //WriteWord();
+                    WriteWord();
                 }
-                timer.Stop();
             }
         }
+
+        private void InitializePlayers()
+        {
+            Console.Clear();
+            _players = new Player[NumberPlayers]
+            {
+                new Player(),
+                new Player()
+            };
+        }
         
-       private bool CheckLetters(HashSet<char> letters)
+        private bool CheckLetters(HashSet<char> letters)
         {
             foreach (char letter in letters)
             {
