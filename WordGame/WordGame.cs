@@ -2,9 +2,14 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Timers;
+using System.IO;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Json;
 
 namespace WordGame
 {
+    [DataContract]
+
     public class WordGame
     {
         private const int NumberPlayers = 2;
@@ -14,16 +19,27 @@ namespace WordGame
         private bool _isFirstWord;
         private bool _isEnd;
         private bool _isFirstPlayer;
+        private bool _isRepeated;        
         private HashSet<char> _lettersInFirstWord;
+        [DataMember]
+        private List<string> _words;
+        [DataMember]
         private Player[] _players;
-
+        private string[] _commands;
+        private string[]  _messages;
+        private int _numberOfCommand;
+        
         public WordGame()
         {
             _isFirstWord = true;
-            _isFirstPlayer = true;            
+            _isFirstPlayer = true;
             _isEnd = false;
+            _isRepeated = false;
+            _words = new List<string>();
+            _messages = new string[2] { "Cлово не подходящей длины!", "Слово некорректно!" };
+            _commands = new string[]{ "/show-words","/score","/total-score"};
         }
-        
+
         public void StartGame()
         {
             InitializePlayers();
@@ -43,7 +59,7 @@ namespace WordGame
                 }
                 Console.WriteLine($"{_players[Convert.ToInt32(!_isFirstPlayer)].Name} :");
                 StartTimer();
-                _isFirstPlayer = !_isFirstPlayer;              
+                _isFirstPlayer = !_isFirstPlayer;
             }
             Console.WriteLine($"Победил {_players[Convert.ToInt32(!_isFirstPlayer)].Name} !");
             Console.ReadLine();
@@ -56,37 +72,66 @@ namespace WordGame
             timer.Stop();
             _isEnd = true;
         }
-        
+
         private void StartTimer()
         {
             Timer timer = new Timer(NumberOfMS);
             timer.Elapsed += StopGame;
             if (!_isFirstWord)
-            {                    
+            {
                 timer.Start();
             }
-            WriteWord();
+            _isRepeated = false;
+            MatchingWord();
             timer.Stop();
         }
-        
-        private void WriteWord()
+
+        private void RewriteWord(KindOfMessages kind)
         {
+            Console.WriteLine(_messages[(int)kind]);
+            MatchingWord();
+        }
+
+        private void MatchingWord()
+        {
+            _isRepeated = false;
             string word = Console.ReadLine();
-            CheckWord(ref word);
+            if (CheckIsCommand(word))
+            {
+                
+            }
+            if (!CheckLetters(word))
+            {
+                RewriteWord(KindOfMessages.MatchingWordError);
+                _isRepeated = true;
+            }
+            if (_isFirstWord && CheckLenght(word) || !_isFirstWord && !CheckLenght(word, _words[0].Length))
+            {
+                RewriteWord(KindOfMessages.LengthError);
+                _isRepeated = true;
+            }            
+            if (_isEnd)
+            {
+                return;
+            }
             if (_isFirstWord)
             {
-                CheckLenght(ref word);
                 _lettersInFirstWord = new HashSet<char>(word.ToLower().ToCharArray());
             }
             else
-            {
-                bool isHaveAllLetters = CheckLetters(new HashSet<char>(word.ToLower().ToCharArray()));
-                if (!isHaveAllLetters)
+            {                
+                if (!MatcingLetters(new HashSet<char>(word.ToLower().ToCharArray())))
                 {
-                    Console.WriteLine("Есть буквы которых нет в превоначальном слове!");
-                    WriteWord();
+                    RewriteWord(KindOfMessages.MatchingLetterError);
+                    _isRepeated = true;
                 }
             }
+            if (_isRepeated || _isEnd)
+            {
+                return;
+            }
+            _words.Add(word);
+            SaveGame();          
         }
 
         private void InitializePlayers()
@@ -97,9 +142,11 @@ namespace WordGame
                 new Player(),
                 new Player()
             };
+            _isEnd = false;
+            _isFirstWord  = true;
         }
-        
-        private bool CheckLetters(HashSet<char> letters)
+       
+        private bool MatcingLetters(HashSet<char> letters)
         {
             foreach (char letter in letters)
             {
@@ -111,26 +158,67 @@ namespace WordGame
             return true;
         }
 
-        private void CheckWord(ref string word)
+        /*private void ChooseCommand()
         {
-            Regex regex = new Regex("[а-я]");
-            if (!regex.IsMatch(word))
+            switch (_numberOfCommand)
             {
-                Console.WriteLine("Слово должно состоять только из русских букв!");
-                word = Console.ReadLine();
-                
-                CheckWord(ref word);
+                case 0:
+                    break;
+                case 1:
+                    break;
+                case 2:
+                    break;
             }
+        }*/
+
+        private bool CheckIsCommand(string word)
+        {
+            if (new Regex(@"[\/][a-z]*").IsMatch(word))
+            {
+                _numberOfCommand = 0;
+                foreach (string command in _commands)
+                {
+                    if (word == command)
+                    {
+                        return true;
+                    }
+                    _numberOfCommand++;
+                }
+            }
+            return false;
         }
 
-        private void CheckLenght(ref string word)
+        private bool CheckLetters(string word) => _isEnd ? true: new Regex("[а-я]").IsMatch(word);
+
+        private bool CheckLenght(string word) => word.Length > MaxLength || word.Length<MinLength;
+
+        private bool CheckLenght(string word, int lenght) => _isEnd ? true : word.Length < lenght ;
+        
+        private void SaveGame()
         {
-            if (word.Length > MaxLength || word.Length < MinLength)
+            var jsonFormatter = new DataContractJsonSerializer(typeof(List<string>));
+            using (var file = new FileStream("WordsInGame.json", FileMode.OpenOrCreate))
             {
-                Console.WriteLine("Длина первоначального слова некорректная");
-                word = Console.ReadLine();
-                CheckLenght(ref word);
+                jsonFormatter.WriteObject(file,_words);
+            }     
+        }
+        
+        private void LoadGame()
+        {
+            var jsonFormatter = new DataContractJsonSerializer(typeof(List<string>));
+            using (var file = new FileStream("WordsInGame.json", FileMode.OpenOrCreate))
+            {
+                var words = jsonFormatter.ReadObject(file) as List<string>;
+
+                if (words != null)
+                {
+                    foreach (string word in words)
+                    {
+                        Console.WriteLine(word);
+                    }
+                }
             }
+            Console.ReadLine();            
         }
     }
 }
