@@ -22,10 +22,12 @@ namespace WordGame
         private bool _isRepeated;        
         private HashSet<char> _lettersInFirstWord;
         [DataMember]
-        private List<string> _words;
+        //private List<string> _words;
+        private List<(string name, string word)> _words;
         [DataMember]
         private Player[] _players;
-        private string[] _commands;
+        private Dictionary<string,Action> _commands;
+        //private string[] _commands;
         private string[]  _messages;
         private int _numberOfCommand;
         
@@ -35,9 +37,17 @@ namespace WordGame
             _isFirstPlayer = true;
             _isEnd = false;
             _isRepeated = false;
-            _words = new List<string>();
-            _messages = new string[2] { "Cлово не подходящей длины!", "Слово некорректно!" };
-            _commands = new string[]{ "/show-words","/score","/total-score"};
+            _words = new List<(string name, string word)>();
+            //_words = new List<string>();
+            _messages = new string[3] { "Cлово не подходящей длины!", "Слово некорректно!","Буквы в слове не совпадают!" };
+            _commands = new Dictionary<string, Action>()
+            {
+                {"/show-words",LoadGame},
+                {"/score",LoadGame},
+                {"/total-score",LoadGame}
+            };
+            //_commands = new string[]{ "/show-words","/score","/total-score"};
+
         }
 
         public void StartGame()
@@ -96,16 +106,12 @@ namespace WordGame
         {
             _isRepeated = false;
             string word = Console.ReadLine();
-            if (CheckIsCommand(word))
-            {
-                
-            }
             if (!CheckLetters(word))
             {
                 RewriteWord(KindOfMessages.MatchingWordError);
                 _isRepeated = true;
             }
-            if (_isFirstWord && CheckLenght(word) || !_isFirstWord && !CheckLenght(word, _words[0].Length))
+            if (_isFirstWord && CheckLenght(word) || !_isFirstWord && !CheckLenght(word, _words[0].word.Length))
             {
                 RewriteWord(KindOfMessages.LengthError);
                 _isRepeated = true;
@@ -130,7 +136,15 @@ namespace WordGame
             {
                 return;
             }
-            _words.Add(word);
+            if (_isFirstWord)
+            {
+                _words.Add(("Первоначальное слова",word));
+            }
+            else
+            {
+                _words.Add((_players[Convert.ToInt32(_isFirstPlayer)].Name, word));
+            }
+
             SaveGame();          
         }
 
@@ -158,36 +172,6 @@ namespace WordGame
             return true;
         }
 
-        /*private void ChooseCommand()
-        {
-            switch (_numberOfCommand)
-            {
-                case 0:
-                    break;
-                case 1:
-                    break;
-                case 2:
-                    break;
-            }
-        }*/
-
-        private bool CheckIsCommand(string word)
-        {
-            if (new Regex(@"[\/][a-z]*").IsMatch(word))
-            {
-                _numberOfCommand = 0;
-                foreach (string command in _commands)
-                {
-                    if (word == command)
-                    {
-                        return true;
-                    }
-                    _numberOfCommand++;
-                }
-            }
-            return false;
-        }
-
         private bool CheckLetters(string word) => _isEnd ? true: new Regex("[а-я]").IsMatch(word);
 
         private bool CheckLenght(string word) => word.Length > MaxLength || word.Length<MinLength;
@@ -196,7 +180,7 @@ namespace WordGame
         
         private void SaveGame()
         {
-            var jsonFormatter = new DataContractJsonSerializer(typeof(List<string>));
+            var jsonFormatter = new DataContractJsonSerializer(typeof(List<(string name, string word)>));
             using (var file = new FileStream("WordsInGame.json", FileMode.OpenOrCreate))
             {
                 jsonFormatter.WriteObject(file,_words);
@@ -205,16 +189,15 @@ namespace WordGame
         
         private void LoadGame()
         {
-            var jsonFormatter = new DataContractJsonSerializer(typeof(List<string>));
+            var jsonFormatter = new DataContractJsonSerializer(typeof(List<(string name, string word)>));
             using (var file = new FileStream("WordsInGame.json", FileMode.OpenOrCreate))
             {
-                var words = jsonFormatter.ReadObject(file) as List<string>;
-
+                var words = jsonFormatter.ReadObject(file) as List<(string name, string word)>;
                 if (words != null)
                 {
-                    foreach (string word in words)
+                    foreach (var word in words)
                     {
-                        Console.WriteLine(word);
+                        Console.WriteLine(word.name +":"+word.word);
                     }
                 }
             }
