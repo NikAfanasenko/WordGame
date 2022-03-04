@@ -1,26 +1,30 @@
 ﻿using System;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Json;
 
 namespace WordGame
 {
     [Serializable]
     public class Player
     {
+        //[DataMember]
         public string Name { get;private set; }
+        //[DataMember]
+        public int NumberWins { get; set; }
 
-        private int _numberWins;
-
-        private bool _isFirstGame;
-
-        public Player()
+        public Player(string sentences)
         {
-            Console.WriteLine("Введите имя игрока:");
+            Console.WriteLine(sentences);
             Name = Console.ReadLine();
-            _isFirstGame = true;
-            if (_isFirstGame)
-            {
-                _numberWins = 0;
-            }
+            NumberWins = 0;            
         }
-
+        
+        public Player(string name, int wins)
+        {
+            Name = name;
+            NumberWins = wins;
+        }
+        
+        public void IncrementWins() => NumberWins += 1;
     }
 }
