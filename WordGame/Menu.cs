@@ -8,22 +8,29 @@ namespace WordGame
 {
     public class Menu
     {
-        private const int NumberPointsMenu = 2;
-        private string[] _pointsMenu;
-        private int _currunt;
+        private const int NumberPointsMenu = 3;
+        private const int NumberPointsOptions = 2;
+        private int _points;
+        private string[] _pointsMenu;        
+        private int _currunt;        
+        private bool _isOptions;
+        private GameManager _manager;
         
-        public Menu()
+        public Menu(GameManager gameManager)
         {
-            _pointsMenu = new string[NumberPointsMenu] { "Старт", "Выход" };
-            _currunt = 1;
-            Console.Title = "Игра в слова";
+            _manager = gameManager;
+            _isOptions = false;            
+            _pointsMenu = _manager.Language.GetPointsMenu();
+            _points = NumberPointsMenu;
+            _currunt = 0;
+            Console.Title = _manager.Language.GetGameTitle();
         }
 
         public void ChoosePointMenu(Action startGameEventHandler)
         {
             while (true)
             {
-                PrintMenu(_currunt, menu: _pointsMenu);
+                PrintMenu(current: _currunt, menu: _pointsMenu);
                 switch (Console.ReadKey().Key)
                 {
                     case ConsoleKey.UpArrow:
@@ -33,21 +40,60 @@ namespace WordGame
                         }
                         break;
                     case ConsoleKey.DownArrow:
-                        if (_currunt != NumberPointsMenu - 1)
+                        if (_currunt != _points - 1)
                         {
                             _currunt++;
                         }
                         break;
                     case ConsoleKey.Enter:
-                        switch (_currunt)
+                        switch (_isOptions)
                         {
-                            case 0:
-                                startGameEventHandler?.Invoke();
+                            case false:
+                                switch (_currunt)
+                                {
+                                    case 0:
+                                        startGameEventHandler?.Invoke();
+                                        break;
+                                    case 1:
+                                        _pointsMenu = _manager.Language.GetOptionsMenu();
+                                        _points = NumberPointsOptions;
+                                        _isOptions = true;
+                                        break;
+                                    case 2:
+                                        Environment.Exit(0);
+                                        break;
+                                }
                                 break;
-                            case 1:
-                                Environment.Exit(0);
+                            case true:
+                                switch (_currunt)
+                                {
+                                    case 0:
+                                        if (_manager.Language is RussianLanguage)
+                                        {
+                                            break;
+                                        }
+                                        _manager.Language = new RussianLanguage();                                                                             
+                                        break;
+                                    case 1:
+                                        if (_manager.Language is EnglishLanguage)
+                                        {
+                                            break;
+                                        }
+                                        _manager.Language = new EnglishLanguage();
+                                        break;
+                                }
+                                _isOptions = false;
+                                _pointsMenu = _manager.Language.GetPointsMenu();
+                                _points = NumberPointsMenu;
                                 break;
-                        }
+                        }                        
+                        break;
+                    case ConsoleKey.Escape:
+                        if (_isOptions)
+                        {
+                            _pointsMenu = _manager.Language.GetPointsMenu();
+                            _points = NumberPointsMenu;
+                        }                        
                         break;
                 }
             }
@@ -57,7 +103,7 @@ namespace WordGame
         {
             Console.Clear();
             
-            for (int i = 0; i < NumberPointsMenu; i++)
+            for (int i = 0; i < _points; i++)
             {
                 Console.WriteLine("{0} {1}", current == i ? "-->" : "  ", menu[i]);
             }
