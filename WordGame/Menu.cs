@@ -14,16 +14,17 @@ namespace WordGame
         private string[] _pointsMenu;        
         private int _currunt;        
         private bool _isOptions;
+        private bool _isContinue;
         private GameManager _manager;
         
         public Menu(GameManager gameManager)
         {
             _manager = gameManager;
-            _isOptions = false;            
+            _isOptions = false;
+            _isContinue = false;
             _pointsMenu = _manager.Language.GetPointsMenu();
             _points = NumberPointsMenu;
             _currunt = 0;
-            Console.Title = _manager.Language.GetGameTitle();
         }
 
         public void ChoosePointMenu(Action startGameEventHandler)

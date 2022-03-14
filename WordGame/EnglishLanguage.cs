@@ -25,6 +25,7 @@ namespace WordGame
         public string[] GetOptionsMenu() => new string[] { "Russian", "English" };
 
         public string[] GetPointsMenu() => new string[] {"Start", "Options","Exit" };
-        
+
+        public string[] GetStartMenu() => new string[] { "Continue", "New Game" };
     }
 }

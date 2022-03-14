@@ -21,14 +21,15 @@ namespace WordGame
         private bool _isEnd;
         private bool _isFirstPlayer;
         private bool _isRepeated;        
-        private HashSet<char> _lettersInFirstWord;
         [DataMember]        
-        private List<(string name, string word)> _words;
+        private List<string> _words;
         [DataMember]
         private Player[] _players;
-        private Dictionary<string,Action> _commands;        
-        private string[]  _messages; 
+        private string[] _messages;
+        private Dictionary<string,Action> _commands;
+        private HashSet<char> _lettersInFirstWord;
         private GameManager _manager;
+        private Player[] _allPlayers;
 
         public WordGame(GameManager gameManager)
         {
@@ -36,13 +37,12 @@ namespace WordGame
             _isFirstWord = true;
             _isFirstPlayer = true;
             _isEnd = false;
-            _isRepeated = false;
-            _words = new List<(string name, string word)>();
+            _isRepeated = false;            
             _commands = new Dictionary<string, Action>()
             {
-                {"/show-words",LoadWordsInGame},
+                {"/show-words",ShowWords},
                 {"/score",LoadScore},
-                {"/total-score",LoadWordsInGame}
+                {"/total-score",PrintFile}
             };
 
         }
@@ -50,30 +50,29 @@ namespace WordGame
         {
             _messages = _manager.Language.GetMessages();
             InitializePlayers();
-                while (true)
+            while (true)
+            {
+                if (_isFirstWord)
                 {
-                    if (_isFirstWord)
-                    {
-                        Console.Clear();
-                        Console.WriteLine(_messages[(int)KindOfMessages.InputFirstWord]);
-                        StartTimer();
-                        _isFirstWord = !_isFirstWord;
-                        continue;
-                    }
-                    if (_isEnd)
-                    {
-                        break;
-                    }
-                    Console.WriteLine($"{_players[Convert.ToInt32(!_isFirstPlayer)].Name} :");
+                    Console.Clear();
+                    Console.WriteLine(_messages[(int)KindOfMessages.InputFirstWord]);
                     StartTimer();
-                    _isFirstPlayer = !_isFirstPlayer;
+                    _isFirstWord = !_isFirstWord;
+                    continue;
                 }
-                Console.WriteLine($"{_messages[(int)KindOfMessages.Congratulation]} {_players[Convert.ToInt32(!_isFirstPlayer)].Name} !");
-                _players[Convert.ToInt32(!_isFirstPlayer)].IncrementWins();
-                SaveScore();
-                Console.ReadLine();
-                //check = true;
-            //}
+                if (_isEnd)
+                {
+                    break;
+                }
+                Console.WriteLine($"{_players[Convert.ToInt32(!_isFirstPlayer)].Name} :");
+                StartTimer();
+                _isFirstPlayer = !_isFirstPlayer;
+            }
+            Console.WriteLine($"{_messages[(int)KindOfMessages.Congratulation]} {_players[Convert.ToInt32(!_isFirstPlayer)].Name} !");
+            _players[Convert.ToInt32(!_isFirstPlayer)].IncrementWins();
+            SaveScore("Score.json",_players);
+            Save();
+            Console.ReadLine();
         }
 
         private void StopGame(object sender, ElapsedEventArgs e)
@@ -107,12 +106,18 @@ namespace WordGame
         {
             _isRepeated = false;
             string word = Console.ReadLine();
+            if (CheckCommand(word))
+            {
+                RunCommand(word);
+                MatchingWord();
+                return;
+            }
             if (!CheckLetters(word))
             {
                 RewriteWord(KindOfMessages.MatchingWordError);
                 _isRepeated = true;
             }
-            if (_isFirstWord && CheckLenght(word) || !_isFirstWord && !CheckLenght(word, _words[0].word.Length))
+            if (_isFirstWord && CheckLenght(word) || !_isFirstWord && !CheckLenght(word, _words[0].Length))
             {
                 RewriteWord(KindOfMessages.LengthError);
                 _isRepeated = true;
@@ -137,28 +142,21 @@ namespace WordGame
             {
                 return;
             }
-            if (_isFirstWord)
-            {
-                _words.Add((_messages[(int)KindOfMessages.FirstWord],word));
-            }
-            else
-            {
-                _words.Add((_players[Convert.ToInt32(_isFirstPlayer)].Name, word));
-            }
-
-            SaveWords();          
+            _words.Add(word);         
         }
 
         private void InitializePlayers()
         {
-            Console.Clear();
+            Console.Clear();            
             _players = new Player[NumberPlayers]
-            {                
+            {
                 new Player(_messages[(int)KindOfMessages.InputName]),
                 new Player(_messages[(int)KindOfMessages.InputName])
-            };
+            };           
             _isEnd = false;
             _isFirstWord  = true;
+            _isFirstPlayer = true;
+            _words = new List<string>();
         }
        
         private bool MatcingLetters(HashSet<char> letters)
@@ -172,6 +170,9 @@ namespace WordGame
             }
             return true;
         }
+        private bool CheckCommand(string command) => new Regex(@"\/[a-z]").IsMatch(command);
+
+        private void RunCommand(string command) => _commands[command]?.Invoke();
 
         private bool CheckLetters(string word) => _isEnd ? true : _manager.Language.CheckLetters(word);
 
@@ -179,21 +180,12 @@ namespace WordGame
 
         private bool CheckLenght(string word, int lenght) => _isEnd ? true : word.Length < lenght;
         
-        private void SaveWords()
-        {
-            var saveWords = new DataContractJsonSerializer(typeof(List<(string name, string word)>));
-            using (var file = new FileStream("WordsInGame.json", FileMode.OpenOrCreate))
-            {
-                saveWords.WriteObject(file,_words);                
-            }            
-        }
-        
-        private void SaveScore()
+        private void SaveScore(string path,Player[] players)
         {
             var saveScore = new DataContractJsonSerializer(typeof(Player[]));
-            using (var file = new FileStream("Score.json", FileMode.OpenOrCreate))
+            using (var file = new FileStream(path, FileMode.OpenOrCreate))
             {
-                saveScore.WriteObject(file, _players);
+                saveScore.WriteObject(file, players);
             }
         }
         
@@ -211,92 +203,105 @@ namespace WordGame
                     }
                 }
             }
-            Console.ReadLine();
         }
 
-        private void LoadWordsInGame()
+        private void ShowWords()
         {
-            var jsonFormatter = new DataContractJsonSerializer(typeof(List<(string name, string word)>));
-            using (var file = new FileStream("WordsInGame.json", FileMode.OpenOrCreate))
+            foreach (string word in _words)
             {
-                var words = jsonFormatter.ReadObject(file) as List<(string name, string word)>;
-                if (words != null)
-                {
-                    foreach (var word in words)
-                    {
-                        Console.WriteLine(word.name +":"+word.word);
-                    }
-                }
+                Console.WriteLine(word);
             }
-            Console.ReadLine();            
-        }        
+        }
 
-        private void SaveTotalScore()
+        private void Save()
         {
-            /*var totalScore = new DataContractJsonSerializer(typeof(Player[]));
-            Player[] totalPlayers;
-            using (var file = new FileStream("TotalScore.json", FileMode.OpenOrCreate))
+            List<Player> players = new List<Player>();
+            Load();
+            bool isCopy = false;
+            if (_allPlayers.Length == 0)
             {
-                var players = totalScore.ReadObject(file) as Player[];
-                totalPlayers = players;
-                if (players != null)
+                _allPlayers = _players;
+                isCopy = true;
+            }
+            foreach (var totalPlayer in _allPlayers)
+            {
+                bool isAdd = false;
+                if (!isCopy)
                 {
                     foreach (var player in _players)
                     {
-                        bool isHave = false;
-                        int i = 0;
-                        foreach (var totalPlayer in players)
+                        if (player.Name == totalPlayer.Name)
                         {
-                            if (player.Name.ToLower()==totalPlayer.Name.ToLower())
-                            {                                
-                                isHave = true;
-                                break;
-                            }
-                            i++;
-                        }                       
-                        if (isHave)
-                        {
-                            players[i].NumberWins += player.NumberWins;
+                            players.Add(new Player(totalPlayer.Name, totalPlayer.NumberWins + player.NumberWins));
+                            isAdd = true;
+                            break;
                         }
-                        else
-                        {
-                            Player[] players1 = totalPlayers;
-                            totalPlayers = new Player[players.Length + 1];
-                            int k = 0;
-                            foreach (var plyr in players1)
-                            {
-                                totalPlayers[k] = plyr;
-                            }
-                            totalPlayers[^1] = player;
-                        }
-                    }                    
+                    }
+                }                                
+                if (!isAdd)
+                {
+                    players.Add(totalPlayer);
                 }
             }
-            foreach (var item in totalPlayers)
+            foreach (var player in _players)
             {
-
-                Console.WriteLine(item.Name);
-            }
-            using (var file = new FileStream("TotalScore.json", FileMode.OpenOrCreate))
-            {
-                totalScore.WriteObject(file, totalPlayers);
-            }*/
-        }
-        private void LoadTotalScore()
-        {
-            /*var totalScore = new DataContractJsonSerializer(typeof(Player[]));
-            using (var file = new FileStream("TotalScore.json", FileMode.OpenOrCreate))
-            {
-                var players = totalScore.ReadObject(file) as Player[];
-                if (players != null)
+                bool isAdd = false;
+                foreach (var totalPlayer in _allPlayers)
                 {
-                    foreach (var player in players)
+                    if (player.Name == totalPlayer.Name)
                     {
-                        Console.WriteLine(player.Name + ":" + player.NumberWins);
+                        isAdd = true;
+                        break;
                     }
                 }
+                if (!isAdd)
+                {
+                    players.Add(player);
+                }
             }
-            Console.ReadLine();*/
+            _allPlayers = new Player[players.Count];
+            int i = 0;
+            foreach (var player in players)
+            {
+                _allPlayers[i] = player;
+                i++;
+            }
+            isCopy = false;
+            var saveScore = new DataContractJsonSerializer(typeof(Player[]));
+            using (var file = new FileStream("TotalScore.json", FileMode.OpenOrCreate))
+            {
+                saveScore.WriteObject(file, _allPlayers);
+            }
+        }
+
+        private void PrintFile()
+        {
+            Load();
+            foreach (var item in _allPlayers)
+            {
+                Console.WriteLine(item.Name + ":" + item.NumberWins);
+            }
+        }
+
+        private void Load()
+        {
+            var score = new DataContractJsonSerializer(typeof(Player[]));
+            using (var file = new FileStream("TotalScore.json", FileMode.OpenOrCreate))
+            {
+                try
+                {
+                    var players = score.ReadObject(file) as Player[];
+                    if (players != null)
+                    {
+                        _allPlayers = players;
+                    }
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("Ошибка с файлом");
+                }
+                    
+            }                            
         }
     }
 }

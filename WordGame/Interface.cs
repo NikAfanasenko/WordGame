@@ -14,6 +14,10 @@ namespace WordGame
 
         public string[] GetMessages();
 
+        public string[] GetStartMenu();
+
         public bool CheckLetters(string word);
+
+       
     }
 }
